@@ -1,0 +1,162 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h2 class="mb-4">{{ title }}</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- Статус -->
+        <div class="mb-3">
+            {{ form.status.label_tag }}
+            {{ form.status }}
+            {{ form.status.errors }}
+        </div>
+
+        <!-- Тип -->
+        <div class="mb-3">
+            {{ form.type.label_tag }}
+            {{ form.type }}
+            {{ form.type.errors }}
+        </div>
+
+        <!-- Категория -->
+        <div class="mb-3">
+            {{ form.category.label_tag }}
+            {{ form.category }}
+            {{ form.category.errors }}
+        </div>
+
+        <!-- Подкатегория -->
+        <div class="mb-3">
+            {{ form.subcategory.label_tag }}
+            {{ form.subcategory }}
+            {{ form.subcategory.errors }}
+        </div>
+
+        <!-- Сумма -->
+        <div class="mb-3">
+            {{ form.amount.label_tag }}
+            {{ form.amount }}
+            {{ form.amount.errors }}
+        </div>
+
+        <!-- Комментарий -->
+        <div class="mb-3">
+            {{ form.comment.label_tag }}
+            {{ form.comment }}
+            {{ form.comment.errors }}
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="{% url 'index' %}" class="btn btn-secondary">Отмена</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    function updateCategories() {
+        const typeId = document.getElementById('id_type').value;
+        const categorySelect = document.getElementById('id_category');
+        
+        if (typeId) {
+            // Очищаем ВСЕ существующие опции кроме первой
+            while (categorySelect.options.length > 1) {
+                categorySelect.remove(1);
+            }
+            
+            fetch(`/api/categories/?type_id=${typeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(category => {
+                        // Проверяем, нет ли уже такой категории в списке
+                        const exists = Array.from(categorySelect.options).some(
+                            opt => opt.value == category.id
+                        );
+                        if (!exists) {
+                            const option = document.createElement('option');
+                            option.value = category.id;
+                            option.textContent = category.name;
+                            categorySelect.appendChild(option);
+                        }
+                    });
+                });
+        } else {
+            // Очищаем все опции кроме первой
+            while (categorySelect.options.length > 1) {
+                categorySelect.remove(1);
+            }
+        }
+        
+        // Очищаем подкатегории
+        const subcategorySelect = document.getElementById('id_subcategory');
+        while (subcategorySelect.options.length > 1) {
+            subcategorySelect.remove(1);
+        }
+    }
+    
+    function updateSubcategories() {
+        const categoryId = document.getElementById('id_category').value;
+        const subcategorySelect = document.getElementById('id_subcategory');
+        
+        if (categoryId) {
+            // Очищаем ВСЕ существующие опции кроме первой
+            while (subcategorySelect.options.length > 1) {
+                subcategorySelect.remove(1);
+            }
+            
+            fetch(`/api/subcategories/?category_id=${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(subcategory => {
+                        // Проверяем, нет ли уже такой подкатегории
+                        const exists = Array.from(subcategorySelect.options).some(
+                            opt => opt.value == subcategory.id
+                        );
+                        if (!exists) {
+                            const option = document.createElement('option');
+                            option.value = subcategory.id;
+                            option.textContent = subcategory.name;
+                            subcategorySelect.appendChild(option);
+                        }
+                    });
+                });
+        } else {
+            // Очищаем все опции кроме первой
+            while (subcategorySelect.options.length > 1) {
+                subcategorySelect.remove(1);
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Если форма редактирования, сразу обновляем категории
+        {% if form.instance.pk %}
+        setTimeout(function() {
+            updateCategories();
+            // После загрузки категорий обновляем подкатегории
+            setTimeout(updateSubcategories, 100);
+        }, 100);
+        {% endif %}
+        
+        // Добавляем обработчики событий
+        document.getElementById('id_type').addEventListener('change', updateCategories);
+        document.getElementById('id_category').addEventListener('change', updateSubcategories);
+    });
+
+    // Добавляем обработчики
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('id_type').addEventListener('change', updateCategories);
+        document.getElementById('id_category').addEventListener('change', updateSubcategories);
+    });
+</script>
+</body>
+</html>
